@@ -62,8 +62,19 @@ data Formula = Atomic      PSymbol [Term]
              | ThereExists VSymbol Formula
              deriving (Eq, Ord)
 
--- a convenience constructor that can also be used for pattern matching
+(#>) :: Formula -> Formula -> Formula
+a #> b = Implication a b
+
+forall, exists :: VSymbol -> Formula -> Formula
+forall = ForAll
+exists = ThereExists
+
+-- convenience constructors that can also be used for pattern matching
 pattern Proposition name = (Atomic (PSymbol name 0) [])
+pattern Bottom = Proposition "⊥"
+pattern Not f = (Implication f Bottom)
+--pattern Conjunction a b = Not (Implication a (Not b))
+--pattern Disjunction a b = Implication (Not a) b
 
 freeVariables :: Formula -> Set VSymbol
 freeVariables (Proposition _) = Set.empty
@@ -80,20 +91,15 @@ freeVariables (Implication a c) = anteFV `Set.union` consFV
 freeVariables (ForAll v f) = Set.delete v (freeVariables f)
 freeVariables (ThereExists v f) = Set.delete v (freeVariables f)
 
-bottom :: Formula
-bottom = Proposition "⊥"
-
 instance Show Formula where
     show (Proposition name) = name
-    --show (Atomic (PSymbol name _) ts) = name ++ "(" ++ args ++ ")"
     show (Atomic (PSymbol name _) ts) = printf "%s(%s)" name args
         where args = List.intercalate ", " $ map show ts
-    show (Conjunction l r) = printf "(%s ⋀ %s)" (show l) (show r)
-    show (Disjunction l r) = printf "(%s ⋁ %s)" (show l) (show r)
-    show (Implication a c)
-        | c == bottom = printf "(¬%s)" (show a)
-        | otherwise   = printf "(%s → %s)" (show a) (show c)
-    show (ForAll x f) = printf "(∀%s : %s)" (show x) (show f)
+    show (Conjunction l r) = printf "(%s ⋀ %s)"  (show l) (show r)
+    show (Disjunction l r) = printf "(%s ⋁ %s)"  (show l) (show r)
+    show (Not a)           = printf "(¬%s)"      (show a)
+    show (Implication a c) = printf "(%s → %s)"  (show a) (show c)
+    show (ForAll x f)      = printf "(∀%s : %s)" (show x) (show f)
     show (ThereExists x f) = printf "(∃%s : %s)" (show x) (show f)
 
 --x1, x2, x3 :: Term
