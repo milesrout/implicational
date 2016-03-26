@@ -14,12 +14,12 @@ import Text.Printf (printf)
 -----------------------------------------------------------------
 
 -- a term is a variable, a constant, a function or a predicate
-
 data Term = Constant String
           | Variable VSymbol
           | Function FSymbol [Term]
           deriving (Eq, Ord)
 
+-- convenience constructor
 pattern Var v = Variable (VSymbol v)
 
 instance Show Term where
@@ -54,14 +54,13 @@ termFreeVariables (Function _ ts) = Set.unions $ map termFreeVariables ts
 
 -- a formula is an atomic formula, a conjunction, a disjunction, 
 -- an implication or a (universally or existentially) quantified formula.
-data Formula where
-    Atomic :: PSymbol -> [Term] -> Formula
-    Conjunction :: Formula -> Formula -> Formula
-    Disjunction :: Formula -> Formula -> Formula
-    Implication :: Formula -> Formula -> Formula
-    ForAll      :: VSymbol -> Formula -> Formula
-    ThereExists :: VSymbol -> Formula -> Formula
-    deriving (Eq, Ord)
+data Formula = Atomic      PSymbol [Term]
+             | Conjunction Formula Formula
+             | Disjunction Formula Formula
+             | Implication Formula Formula
+             | ForAll      VSymbol Formula
+             | ThereExists VSymbol Formula
+             deriving (Eq, Ord)
 
 -- a convenience constructor that can also be used for pattern matching
 pattern Proposition name = (Atomic (PSymbol name 0) [])
