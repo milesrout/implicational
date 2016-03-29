@@ -58,16 +58,9 @@ data Formula = Atomic      PSymbol [Term]
              | Conjunction Formula Formula
              | Disjunction Formula Formula
              | Implication Formula Formula
-             | ForAll      VSymbol Formula
+             | ForEachOfEm      VSymbol Formula
              | ThereExists VSymbol Formula
              deriving (Eq, Ord)
-
-(#>) :: Formula -> Formula -> Formula
-a #> b = Implication a b
-
-forall, exists :: VSymbol -> Formula -> Formula
-forall = ForAll
-exists = ThereExists
 
 -- convenience constructors that can also be used for pattern matching
 pattern Proposition name = (Atomic (PSymbol name 0) [])
@@ -75,6 +68,19 @@ pattern Bottom = Proposition "⊥"
 pattern Not f = (Implication f Bottom)
 --pattern Conjunction a b = Not (Implication a (Not b))
 --pattern Disjunction a b = Implication (Not a) b
+
+(#>) :: Formula -> Formula -> Formula
+a #> b = Implication a b
+
+(#&) :: Formula -> Formula -> Formula
+a #& b = Conjunction a b
+
+(#|) :: Formula -> Formula -> Formula
+a #| b = Disjunction a b
+
+forall, exists :: VSymbol -> Formula -> Formula
+forall = ForEachOfEm
+exists = ThereExists
 
 freeVariables :: Formula -> Set VSymbol
 freeVariables (Proposition _) = Set.empty
@@ -88,7 +94,7 @@ freeVariables (Disjunction l r) = leftFV `Set.union` rightFV
 freeVariables (Implication a c) = anteFV `Set.union` consFV
     where anteFV = freeVariables a
           consFV = freeVariables c
-freeVariables (ForAll v f) = Set.delete v (freeVariables f)
+freeVariables (ForEachOfEm v f) = Set.delete v (freeVariables f)
 freeVariables (ThereExists v f) = Set.delete v (freeVariables f)
 
 instance Show Formula where
@@ -97,9 +103,9 @@ instance Show Formula where
         where args = List.intercalate ", " $ map show ts
     show (Conjunction l r) = printf "(%s ⋀ %s)"  (show l) (show r)
     show (Disjunction l r) = printf "(%s ⋁ %s)"  (show l) (show r)
-    show (Not a)           = printf "(¬%s)"      (show a)
+    show (Not a)           = printf "¬%s"        (show a)
     show (Implication a c) = printf "(%s → %s)"  (show a) (show c)
-    show (ForAll x f)      = printf "(∀%s : %s)" (show x) (show f)
+    show (ForEachOfEm x f)      = printf "(∀%s : %s)" (show x) (show f)
     show (ThereExists x f) = printf "(∃%s : %s)" (show x) (show f)
 
 --x1, x2, x3 :: Term
